@@ -11,7 +11,7 @@ impl Parse {
         let syntax_node = SyntaxNode::new_root(self.green_node.clone());
         let formatted = format!("{:#?}", syntax_node);
 
-        // We cut off the last byte because formatting the SyntaxNode adds on a newline at the end.
+        // slice off the newline at the end of `formatted`
         formatted[0..formatted.len() - 1].to_string()
     }
 }
@@ -47,19 +47,6 @@ impl<'a> Parser<'a> {
         self.builder.token(Filter::kind_to_raw(kind), text.into());
     }
 
-    fn start_node_at(&mut self, checkpoint: Checkpoint, kind: SyntaxKind) {
-        self.builder
-            .start_node_at(checkpoint, Filter::kind_to_raw(kind));
-    }
-
-    fn finish_node(&mut self) {
-        self.builder.finish_node();
-    }
-
-    fn checkpoint(&self) -> Checkpoint {
-        self.builder.checkpoint()
-    }
-
     fn peek(&mut self) -> Option<SyntaxKind> {
         // chew through whitespace
         while self
@@ -72,6 +59,19 @@ impl<'a> Parser<'a> {
         }
 
         self.lexer.peek().map(|(kind, _)| *kind)
+    }
+
+    fn start_node_at(&mut self, checkpoint: Checkpoint, kind: SyntaxKind) {
+        self.builder
+            .start_node_at(checkpoint, Filter::kind_to_raw(kind));
+    }
+
+    fn finish_node(&mut self) {
+        self.builder.finish_node();
+    }
+
+    fn checkpoint(&self) -> Checkpoint {
+        self.builder.checkpoint()
     }
 }
 
@@ -119,7 +119,7 @@ fn expr_binding_power(p: &mut Parser, minimum_binding_power: u8) {
             Some(SyntaxKind::LessThan) => InfixOp::LessThan,
             Some(SyntaxKind::GreaterThanOrEqualTo) => InfixOp::GreaterThanOrEqualTo,
             Some(SyntaxKind::LessThanOrEqualTo) => InfixOp::LessThanOrEqualTo,
-            _ => return, // we’ll handle errors later.
+            _ => return, // yeah, no error handling, but that'll be handled later.
         };
 
         let (left_binding_power, right_binding_power) = op.binding_power();
